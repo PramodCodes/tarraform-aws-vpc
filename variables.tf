@@ -29,3 +29,30 @@ variable "igw_tags" {
     type = map
     default = {}
 }
+variable "public_subnet_tags" {
+    type = map
+    default = {}
+}
+
+variable "private_subnet_tags" {
+    type = map
+    default = {}
+}
+
+variable "public_subnet_cidr" {
+  type = list # if we give string we cant handle a list 
+# if user provides bad input (list of 1 or 3 instead of 2 ) we must throw error 
+  validation {
+    condition = length(var.public_subnet_cidr) == 2
+    error_message = "size of public subnet cidr must be 2 , check and provide valid cidr"
+  }
+}
+
+variable "private_subnet_cidr" {
+  type = list
+#   default = [] if we enable this list is null by default so validation cannot be done so defeats purpose 
+  validation {
+    condition = length(var.private_subnet_cidr) == 2
+    error_message = "size of private subnet cidr must be 2 , check and provide valid cidr"
+  }
+}
