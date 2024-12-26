@@ -28,6 +28,7 @@ resource "aws_internet_gateway" "gw" {
 }
 
 # creation of subnets in terraform
+# creating public, private subnets 1a and 1b
 resource "aws_subnet" "public" {
   count = length(var.public_subnet_cidr)
   vpc_id     = aws_vpc.main.id
@@ -58,7 +59,6 @@ resource "aws_subnet" "private" {
   )
 }
 
-
 #Database subnets
 resource "aws_subnet" "database" {
   count = length(var.database_subnet_cidr)
@@ -75,10 +75,13 @@ resource "aws_subnet" "database" {
   )
 }
 
+
+# creation of elastic ip
 resource "aws_eip" "eip" {
   domain   = "vpc"
 }
 
+# creation of NAT gateway
 resource "aws_nat_gateway" "NAT" {
   allocation_id = aws_eip.eip.id
   subnet_id     = aws_subnet.public[0].id # since its a list
@@ -95,8 +98,8 @@ resource "aws_nat_gateway" "NAT" {
   depends_on = [aws_internet_gateway.gw]
 }
 
-#public routetable
-
+# we need 3 route tables public private and database
+# creation of public, private and database routetable
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
   tags = merge(
@@ -119,7 +122,6 @@ resource "aws_route_table" "private" {
   )
 }
 
-
 resource "aws_route_table" "database" {
   vpc_id = aws_vpc.main.id
   tags = merge(
@@ -130,6 +132,8 @@ resource "aws_route_table" "database" {
     }
   )
 }
+
+# assoication of network end points in route tables public, private and database
 # Resource: aws_route Provides a resource to create a routing table entry (a route) in a VPC routing table.
 resource "aws_route" "public_route" {
   route_table_id            = aws_route_table.public.id
@@ -149,6 +153,8 @@ resource "aws_route" "database_route" {
   nat_gateway_id = aws_nat_gateway.NAT.id
 }
 
+# every route table needs to be properly connected to routes
+# public rt with public subnet , private rt with private subnet , database rt with database subnet
 #association of routes
 
 resource "aws_route_table_association" "public"  {
@@ -157,13 +163,11 @@ resource "aws_route_table_association" "public"  {
   route_table_id = aws_route_table.public.id
 }
 
-
 resource "aws_route_table_association" "private"  {
   count =  length(var.private_subnet_cidr) # to get iteration count 
   subnet_id      = element(aws_subnet.private[*].id, count.index) #this function returns the element 
   route_table_id = aws_route_table.private.id
 }
-
 
 resource "aws_route_table_association" "database"  {
   count =  length(var.database_subnet_cidr) # to get iteration count 
@@ -171,6 +175,7 @@ resource "aws_route_table_association" "database"  {
   route_table_id = aws_route_table.database.id
 }
 
+# i think for db we need special subnet group
 resource "aws_db_subnet_group" "db_subnet_group" {
   name = "${local.name}"
   subnet_ids = aws_subnet.database[*].id

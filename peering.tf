@@ -37,19 +37,25 @@ count = var.is_peering_required && var.acceptor_vpc_id == "" ? 1 : 0
 }
 
 resource "aws_route" "public_peering" {
-# we will only be able to create route if vpc peering is enabled and accepter vpc is null
 count = var.is_peering_required && var.acceptor_vpc_id == "" ? 1 : 0
-# we need to add the route to default vpc route table
   route_table_id            = aws_route_table.public.id  # we need to pass default route table id using data source 
   destination_cidr_block    = data.aws_vpc.default_vpc.cidr_block # this is added being in the connection details of requester so destination default vpc cidr
   vpc_peering_connection_id = aws_vpc_peering_connection.vpc_peering[0].id
 }
 
 resource "aws_route" "database_peering" {
-# we will only be able to create route if vpc peering is enabled and accepter vpc is null
 count = var.is_peering_required && var.acceptor_vpc_id == "" ? 1 : 0
-# we need to add the route to default vpc route table
   route_table_id            = aws_route_table.database.id  # we need to pass default route table id using data source 
+  destination_cidr_block    = data.aws_vpc.default_vpc.cidr_block # this is added being in the connection details of requester so destination default vpc cidr
+  vpc_peering_connection_id = aws_vpc_peering_connection.vpc_peering[0].id
+}
+
+#database_route
+
+# # we have not created peering foute for ms layer due to which microservices layer is not communicating
+resource "aws_route" "private_peering" {
+count = var.is_peering_required && var.acceptor_vpc_id == "" ? 1 : 0
+  route_table_id            = aws_route_table.private.id  # we need to pass default route table id using data source 
   destination_cidr_block    = data.aws_vpc.default_vpc.cidr_block # this is added being in the connection details of requester so destination default vpc cidr
   vpc_peering_connection_id = aws_vpc_peering_connection.vpc_peering[0].id
 }
