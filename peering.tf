@@ -50,9 +50,8 @@ count = var.is_peering_required && var.acceptor_vpc_id == "" ? 1 : 0
   vpc_peering_connection_id = aws_vpc_peering_connection.vpc_peering[0].id
 }
 
-#database_route
 
-# # we have not created peering foute for ms layer due to which microservices layer is not communicating
+# we have not created peering foute for ms layer due to which microservices layer is not communicating
 resource "aws_route" "private_peering" {
 count = var.is_peering_required && var.acceptor_vpc_id == "" ? 1 : 0
   route_table_id            = aws_route_table.private.id  # we need to pass default route table id using data source 
